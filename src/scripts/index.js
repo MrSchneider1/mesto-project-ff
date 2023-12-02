@@ -1,6 +1,9 @@
 // @todo: Темплейт карточки
+import { initialCards } from './cards.js'
+
 const placesList = document.querySelector('.places__list');
 const cardTemplate = document.querySelector('#card-template').content;
+const popUp = document.querySelector('.popup');
 
 function createCard(item) {
     const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
@@ -31,6 +34,12 @@ function addCards() {
 }
 
 addCards();
+
+function openPopUp() {
+    addEventListener('click', function() {
+        popUp.classList.toggle('popup_is-opened');
+    });
+}
 
 // @todo: DOM узлы
 
