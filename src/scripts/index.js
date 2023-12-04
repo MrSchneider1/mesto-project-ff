@@ -1,50 +1,52 @@
-// @todo: Темплейт карточки
-import { initialCards } from './cards.js'
+import { initialCards, addCards, handleSubmitFormAdd } from './cards.js';
+import { openModal, closeModal, setDefaultInputs, setupImagePopupListeners, handleSubmitFormEdit } from './modal.js';
 
 const placesList = document.querySelector('.places__list');
 const cardTemplate = document.querySelector('#card-template').content;
-const popUp = document.querySelector('.popup');
+const editButton = document.querySelector('.profile__edit-button');
+const popupTypeEdit = document.querySelector('.popup_type_edit');
+const addButton = document.querySelector('.profile__add-button');
+const popupTypeAdd = document.querySelector('.popup_type_new-card');
+const popupTypeImage = document.querySelector('.popup_type_image');
+const closeButtonEdit = popupTypeEdit.querySelector('.popup__close');
+const closeButtonAdd = popupTypeAdd.querySelector('.popup__close');
+const closeButtonImg = popupTypeImage.querySelector('.popup__close');
+const formElementAdd = popupTypeAdd.querySelector('.popup__form');
+const formElementEdit = popupTypeEdit.querySelector('.popup__form');
 
-function createCard(item) {
-    const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
-    const cardImage = cardElement.querySelector('.card__image');
-    const cardName = cardElement.querySelector('.card__title');
-    const deleteButton = cardElement.querySelector('.card__delete-button');
+addCards(initialCards);
 
-    cardImage.src = item.link;
-    cardImage.alt = item.name;
-    cardName.textContent = item.name;
-    deleteButton.addEventListener('click', function() {
-        deleteCard(deleteButton);
-    });
+// слушатели открытия попапов
 
-    return cardElement;
-}
+editButton.addEventListener('click', function() {
+    openModal(popupTypeEdit);
+    setDefaultInputs();
+});
 
-function deleteCard(item) {
-    const removedObject = item.closest('.places__item');
-    removedObject.remove();
-}
+addButton.addEventListener('click', function() {
+    openModal(popupTypeAdd);
+});
 
-function addCards() {
-    initialCards.forEach(function (item) {
-        const cardCopy = createCard(item);
-        placesList.append(cardCopy);
-    });
-}
+setupImagePopupListeners();
 
-addCards();
+//слушатели закрытия попапов
 
-function openPopUp() {
-    addEventListener('click', function() {
-        popUp.classList.toggle('popup_is-opened');
-    });
-}
+closeButtonEdit.addEventListener('click', function() {
+    closeModal(popupTypeEdit);
+});
+closeButtonAdd.addEventListener('click', function() {
+    closeModal(popupTypeAdd);
+});
+closeButtonImg.addEventListener('click', function() {
+    closeModal;(popupTypeImage);
+});
 
-// @todo: DOM узлы
+//слушатель добавления карточки
 
-// @todo: Функция создания карточки
+formElementAdd.addEventListener('submit', handleSubmitFormAdd);
 
-// @todo: Функция удаления карточки
+// слушатель редактирования имени
 
-// @todo: Вывести карточки на страницу
+formElementEdit.addEventListener('submit', handleSubmitFormEdit);
+
+export { placesList, cardTemplate, editButton, popupTypeEdit, addButton, popupTypeAdd, popupTypeImage, closeButtonEdit, closeButtonAdd, closeButtonImg, formElementAdd, formElementEdit }
