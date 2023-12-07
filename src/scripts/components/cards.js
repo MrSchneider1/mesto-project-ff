@@ -1,32 +1,4 @@
-import { placesList, cardTemplate, popupTypeAdd } from './index.js'
-import { setupImagePopupListeners, closeModal } from './modal.js'
-
-const initialCards = [
-    {
-      name: "Архыз",
-      link: "https://pictures.s3.yandex.net/frontend-developer/cards-compressed/arkhyz.jpg",
-    },
-    {
-      name: "Челябинская область",
-      link: "https://pictures.s3.yandex.net/frontend-developer/cards-compressed/chelyabinsk-oblast.jpg",
-    },
-    {
-      name: "Таганрог",
-      link: "https://images.unsplash.com/photo-1694456950156-844c5785dcce?auto=format&fit=crop&q=80&w=2000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    },
-    {
-      name: "Камчатка",
-      link: "https://pictures.s3.yandex.net/frontend-developer/cards-compressed/kamchatka.jpg",
-    },
-    {
-      name: "Холмогорский район",
-      link: "https://pictures.s3.yandex.net/frontend-developer/cards-compressed/kholmogorsky-rayon.jpg",
-    },
-    {
-      name: "Байкал",
-      link: "https://pictures.s3.yandex.net/frontend-developer/cards-compressed/baikal.jpg",
-    },
-];
+import { cardTemplate, displayClickedImage } from './index.js'
 
 function createCard(item) {
   const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
@@ -45,6 +17,10 @@ function createCard(item) {
   likeCardButton.addEventListener('click', function(evt) {
       likeCard(evt.target);
   });
+  
+  cardImage.addEventListener('click', function() {
+    displayClickedImage(item.name, item.link);
+  });
 
   return cardElement;
 }
@@ -58,36 +34,4 @@ function deleteCard(item) {
   removedObject.remove();
 }
 
-function addCards(array) {
-  array.forEach(function (item) {
-      const cardCopy = createCard(item);
-      placesList.append(cardCopy);
-  });
-}
-
-function addCardsToBeginning(array) {
-  array.forEach(function (item) {
-      const cardCopy = createCard(item);
-      placesList.prepend(cardCopy);
-  });
-}
-
-// функция добавления новой карточки
-
-function handleSubmitFormAdd(evt) {
-  const nameInput = document.querySelector('.popup__input_type_card-name');
-  const urlInput = document.querySelector('.popup__input_type_url');
-  evt.preventDefault();
-
-  const newArray = [
-      { 
-          name: `${nameInput.value}`,
-          link: `${urlInput.value}`
-      }
-  ]
-  addCardsToBeginning(newArray);
-  setupImagePopupListeners();
-  closeModal(popupTypeAdd); 
-}
-
-export { initialCards, createCard, likeCard, deleteCard, addCards, addCardsToBeginning, handleSubmitFormAdd }
+export { createCard, likeCard, deleteCard }
