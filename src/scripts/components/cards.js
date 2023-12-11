@@ -1,4 +1,4 @@
-import { cardTemplate, displayClickedImage } from './index.js'
+import { cardTemplate, displayClickedImage } from './index.js' 
 
 function createCard(item) {
   const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
@@ -34,4 +34,4 @@ function deleteCard(item) {
   removedObject.remove();
 }
 
-export { createCard, likeCard, deleteCard }
+export { createCard }
