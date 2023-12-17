@@ -1,0 +1,11 @@
+.card__likes-amount {
+    text-align: center;
+    font-size: 13px;
+    margin: 0;
+}
+
+.like-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}

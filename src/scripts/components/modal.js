@@ -17,7 +17,9 @@ function closeByEsc(evt) {
 }
 
 function closeByClick(evt) {
-    if(evt.currentTarget === evt.target) {
+    const popup = document.querySelector('.popup_is-opened');
+    const closeButton = popup.querySelector('.popup__close');
+    if(evt.target === evt.currentTarget || evt.target === closeButton) {
         const popup = document.querySelector('.popup_is-opened');
         closeModal(popup);
     }
