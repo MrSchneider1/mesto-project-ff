@@ -1,4 +1,4 @@
-import { createCard } from "./cards";
+import { createCard } from "./card.js";
 import { openModal } from './modal.js';
 
 
@@ -20,7 +20,13 @@ const config = {
             authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
           }
     })
-        .then(res => res.json())
+        .then((res) => {
+            if (res.ok) {
+                return res.json();
+            } else {
+                return Promise.reject(`Ошибка: ${res.status}`);
+            }
+        })
         .then((res) => {
             document.querySelector('.profile__title').textContent = res.name;
             document.querySelector('.profile__description').textContent = res.about;
@@ -29,11 +35,7 @@ const config = {
         .catch((err) => {
             console.log('Ошибка. Запрос не выполнен: ', err);
         }); 
-  } 
-
-  //добавил свой UserId, взял из карточки профиля
-
-const userId = 'fd8130cfa77dd3af30b582d8';
+  }
 
 const getUserId = () => {
     return fetch(`${config.baseUrl}/users/me`,  {
@@ -72,17 +74,6 @@ const getInitialCards = () => {
         .then((cards) => {
             return cards;
         })
-        // .then(() => {
-        //     const arrayDeleteButtons = document.querySelectorAll('.card__delete-button'); // можем реализовать только во втором then, чтоб подгрузился масив карточек с id
-        //     arrayDeleteButtons.forEach((deleteButton) => {
-        //         deleteButton.addEventListener('click', function(e) {
-        //             const popupTypeDelete = document.querySelector('.popup_type_delete');
-        //             openModal(popupTypeDelete);
-        //             const popupButton = popupTypeDelete.querySelector('.popup__button');
-        //             popupButton.setAttribute('data-id', e.target.getAttribute('data-button-id'));  //передаем id карточки в атрибут открывшегося попапа, чтоб знать, какую удалять
-        //         })
-        //     })
-        // })
         .catch((err) => {
             console.log('Ошибка. Запрос не выполнен: ', err);
         }); 
@@ -111,6 +102,7 @@ const addNewCard = (newCard) => {
         }
     })
     .then((item) => {
+        console.log(item);
             const cardCopy = createCard(item, item.likes.length);
             const deleteButton = cardCopy.querySelector('.card__delete-button');
             const likeCardButton = cardCopy.querySelector('.card__like-button');
@@ -128,7 +120,7 @@ const addNewCard = (newCard) => {
             })
             
             likeCardButton.addEventListener('click', (e) => {
-                setAndDeleteLike(e);
+                setAndDeleteLike(e, item);
             })
             
             likesAmountElement.textContent = item.likes.length;
@@ -145,11 +137,11 @@ const addNewCard = (newCard) => {
 
 // добавление и удаление лайка
 
-const setAndDeleteLike = (e) => {
+const setAndDeleteLike = (e, item) => {
     e.target.classList.toggle('card__like-button_is-active');
-
+    console.log(e)
     if(e.target.classList.contains('card__like-button_is-active')) {
-        fetch(`https://nomoreparties.co/v1/wff-cohort-2/cards/likes/${e.target.getAttribute('data-like-card-id')}`, {
+        fetch(`https://nomoreparties.co/v1/wff-cohort-2/cards/likes/${item._id}`, {
             method: 'PUT',
                     headers: {
                         authorization: '69f8653c-9291-433e-9bb1-872dc49ab260',
@@ -158,13 +150,14 @@ const setAndDeleteLike = (e) => {
         })
         .then((res) => {
             if (res.ok) {
+                console.log('ok' + res);
                 return res.json();
             } else {
                 return Promise.reject(`Ошибка: ${res.status}`);
             }
         })
         .then((res) => {
-            const card = document.getElementById(`${e.target.getAttribute('data-like-card-id')}`);
+            const card = document.getElementById(`${item._id}`);
             const likesAmountElement = card.querySelector('.card__likes-amount');
             likesAmountElement.textContent = res.likes.length;
         })
@@ -172,7 +165,7 @@ const setAndDeleteLike = (e) => {
             console.log('Ошибка. Запрос не выполнен: ' + err);
         });
         } else {
-            fetch(`https://nomoreparties.co/v1/wff-cohort-2/cards/likes/${e.target.getAttribute('data-like-card-id')}`, {
+            fetch(`https://nomoreparties.co/v1/wff-cohort-2/cards/likes/${item._id}`, {
             method: 'DELETE',
                     headers: {
                         authorization: '69f8653c-9291-433e-9bb1-872dc49ab260',
@@ -181,7 +174,7 @@ const setAndDeleteLike = (e) => {
         })
         .then(res => res.json())
         .then((res) => {
-            const card = document.getElementById(`${e.target.getAttribute('data-like-card-id')}`);
+            const card = document.getElementById(`${item._id}`);
             const likesAmountElement = card.querySelector('.card__likes-amount');
             likesAmountElement.textContent = res.likes.length;
         })
@@ -193,8 +186,8 @@ const setAndDeleteLike = (e) => {
 
 //удаление карточки
 
-const deleteCard = (e) => {
-    fetch(`https://nomoreparties.co/v1/wff-cohort-2/cards/${e.target.getAttribute('data-id')}`, {
+const deleteCard = (e, item) => {
+    fetch(`https://nomoreparties.co/v1/wff-cohort-2/cards/${item._id}`, {
         method: 'DELETE',
         headers: {
             authorization: '69f8653c-9291-433e-9bb1-872dc49ab260',
@@ -209,9 +202,9 @@ const deleteCard = (e) => {
         }
     })
     .then(() => {
-        const card = document.getElementById(`${e.target.getAttribute('data-id')}`);
+        const card = document.getElementById(`${item._id}`);
         card.remove();
-    }) 
+    })
     .catch((err) => {
         console.log('Ошибка. Запрос не выполнен: ' + err);
     });

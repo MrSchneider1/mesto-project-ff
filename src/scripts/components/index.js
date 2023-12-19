@@ -1,7 +1,7 @@
 import { openModal, closeModal } from './modal.js';
 import { enableValidation, clearValidation } from './validation.js';
 import { uploadAvatar, getInitialCards, addNewCard, setAndDeleteLike, deleteCard, changeProfileData, changeAvatar, getUserId, placesList } from './api.js'
-import { createCard } from "./cards";
+import { createCard } from "./card.js";
 
 const profileTitle = document.querySelector('.profile__title');
 const profileJob = document.querySelector('.profile__description');
@@ -25,7 +25,7 @@ const cardNameInput = document.querySelector('.popup__input_type_card-name');
 const urlInput = document.querySelector('.popup__input_type_url');
 const titleInput = document.querySelector('.popup__input_type_name');
 const jobInput = document.querySelector('.popup__input_type_description');
-const buttonEditAvatar = document.querySelector('.profile__image_edit-button');
+const buttonEditAvatar = document.querySelector('.profile__image');
 const popupTypeEditAvatar = document.querySelector('.popup_type_edit_avatar');//дубль в api
 const buttonSubmitAvatarChange = popupTypeEditAvatar.querySelector('.popup__button');//дубль в api
 const formElementEditAvatar = popupTypeEditAvatar.querySelector('.popup__form');
@@ -94,11 +94,11 @@ Promise.all([getUserId(), getInitialCards()])
             const likesAmountElement = cardCopy.querySelector('.card__likes-amount');
 
             cardCopy.setAttribute('id', item._id);
-            deleteButton.setAttribute('data-button-id', item._id); //нужно, чтобы добавить атрибут Id карточки на кнопку сабмита в модалке и знать, какую удалять
+            // deleteButton.setAttribute('data-button-id', item._id); //нужно, чтобы добавить атрибут Id карточки на кнопку сабмита в модалке и знать, какую удалять
             likeCardButton.setAttribute('data-like-card-id', item._id); //Нужно, чтобы в запросе к серверу по лайку найти нужную карточку
             
             likeCardButton.addEventListener('click', (e) => {
-                setAndDeleteLike(e);
+                setAndDeleteLike(e, item);
             })
             
             likesAmountElement.textContent = item.likes.length;
@@ -109,28 +109,53 @@ Promise.all([getUserId(), getInitialCards()])
             if(item.likes.some((item) => item._id === userId)) { // если мы поставили лайк до этого, пусть лайк будет активным
                 likeCardButton.classList.add('card__like-button_is-active');
             }
-            placesList.append(cardCopy);
-            })
-            
-        })
-.then(() => {
-        const arrayDeleteButtons = document.querySelectorAll('.card__delete-button'); // можем реализовать только во втором then, чтоб подгрузился масив карточек с id
-        arrayDeleteButtons.forEach((deleteButton) => {
+
             deleteButton.addEventListener('click', function(e) {
                 const popupTypeDelete = document.querySelector('.popup_type_delete');
                 openModal(popupTypeDelete);
                 const popupButton = popupTypeDelete.querySelector('.popup__button');
-                popupButton.setAttribute('data-id', e.target.getAttribute('data-button-id'));  //передаем id карточки в атрибут открывшегося попапа, чтоб знать, какую удалять
+                popupButton.addEventListener('click', function(e) {
+                    deleteCard(e, item);
+                    closeModal(popupTypeDelete);
+                })
+                // popupButton.setAttribute('data-id', e.target.getAttribute('data-button-id'));  //передаем id карточки в атрибут открывшегося попапа, чтоб знать, какую удалять
             })
+
+            //удаление карточки слушатель
+
+            // buttonSubmitDeleteCard.addEventListener('click', function(e) {
+            //     deleteCard(e);
+            //     closeModal(popupTypeDelete);
+            // })
+            placesList.append(cardCopy);
+            })
+            
         })
-    })
+// .then(() => {
+//         const arrayDeleteButtons = document.querySelectorAll('.card__delete-button'); // можем реализовать только во втором then, чтоб подгрузился масив карточек с id
+//         arrayDeleteButtons.forEach((deleteButton) => {
+//             deleteButton.addEventListener('click', function(e) {
+//                 const popupTypeDelete = document.querySelector('.popup_type_delete');
+//                 openModal(popupTypeDelete);
+//                 const popupButton = popupTypeDelete.querySelector('.popup__button');
+//                 popupButton.addEventListener('click', function(e, item) {
+//                     deleteCard(e, item);
+//                     closeModal(popupTypeDelete);
+//                 })
+//                 // popupButton.setAttribute('data-id', e.target.getAttribute('data-button-id'));  //передаем id карточки в атрибут открывшегося попапа, чтоб знать, какую удалять
+//             })
+//         })
+//     })
+.catch((err) => {
+    console.log('Ошибка. Запрос не выполнен: ' + err);
+});
 
-//удаление карточки слушатель 
+//удаление карточки слушатель
 
-buttonSubmitDeleteCard.addEventListener('click', function(e) {
-    deleteCard(e);
-    closeModal(popupTypeDelete);
-})
+// buttonSubmitDeleteCard.addEventListener('click', function(e) {
+//     deleteCard(e);
+//     closeModal(popupTypeDelete);
+// })
 
 //слушатель сабмита обновления данных профиля
 
