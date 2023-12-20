@@ -1,8 +1,9 @@
 import { openModal, closeModal } from './modal.js';
 import { enableValidation, clearValidation } from './validation.js';
-import { uploadAvatar, getInitialCards, addNewCard, setAndDeleteLike, deleteCard, changeProfileData, changeAvatar, getUserId, placesList } from './api.js'
+import { uploadAvatar, getInitialCards, addNewCard, changeProfileData, changeAvatar, getUserId, deleteCard, setDislike, setLike } from './api.js'
 import { createCard } from "./card.js";
 
+const placesList = document.querySelector('.places__list');
 const profileTitle = document.querySelector('.profile__title');
 const profileJob = document.querySelector('.profile__description');
 const profileImage = document.querySelector('.profile__image');
@@ -12,13 +13,13 @@ const buttonClosePopupEdit = popupTypeEdit.querySelector('.popup__close');
 const buttonAddCard = document.querySelector('.profile__add-button');
 const popupTypeAdd = document.querySelector('.popup_type_new-card');
 const buttonClosePopupAdd = popupTypeAdd.querySelector('.popup__close');
+const buttonSubmitAddCard = popupTypeAdd.querySelector('.popup__button')
 const popupTypeImage = document.querySelector('.popup_type_image');
 const popupImage = document.querySelector('.popup__image');
 const popupImageCaption = document.querySelector('.popup__caption');
 const buttonCloseImg = popupTypeImage.querySelector('.popup__close');
-const popupTypeDelete = document.querySelector('.popup_type_delete');//дубль в api
-const buttonSubmitDeleteCard = popupTypeDelete.querySelector('.popup__button');
-const buttonSubmitEditCard = popupTypeEdit.querySelector('.popup__button');//дубль в api
+const popupTypeDelete = document.querySelector('.popup_type_delete');
+const buttonSubmitEditCard = popupTypeEdit.querySelector('.popup__button');
 const formElementAddCard = popupTypeAdd.querySelector('.popup__form');
 const formElementEditProfile = popupTypeEdit.querySelector('.popup__form');
 const cardNameInput = document.querySelector('.popup__input_type_card-name');
@@ -26,9 +27,10 @@ const urlInput = document.querySelector('.popup__input_type_url');
 const titleInput = document.querySelector('.popup__input_type_name');
 const jobInput = document.querySelector('.popup__input_type_description');
 const buttonEditAvatar = document.querySelector('.profile__image');
-const popupTypeEditAvatar = document.querySelector('.popup_type_edit_avatar');//дубль в api
-const buttonSubmitAvatarChange = popupTypeEditAvatar.querySelector('.popup__button');//дубль в api
+const popupTypeEditAvatar = document.querySelector('.popup_type_edit_avatar');
+const buttonSubmitAvatarChange = popupTypeEditAvatar.querySelector('.popup__button');
 const formElementEditAvatar = popupTypeEditAvatar.querySelector('.popup__form');
+const inputAvatar = popupTypeEditAvatar.querySelector('.popup__input');
 
 function setDefaultInputs() {
     titleInput.value = profileTitle.textContent;
@@ -44,19 +46,27 @@ function displayClickedImage(name, url) {
     openModal(popupTypeImage);
   }
 
+enableValidation({
+    formSelector: '.popup__form',
+    inputSelector: '.popup__input',
+    submitButtonSelector: '.popup__button',
+    inactiveButtonClass: 'popup__button_disabled',
+    inputErrorClass: 'popup__input_type_error',
+    errorClass: 'popup__error_visible'
+  });
+
 // слушатели открытия попапов
 
 buttonEditProfile.addEventListener('click', function() {
     openModal(popupTypeEdit);
     setDefaultInputs();
-    clearValidation(formElementEditProfile);
+    
 });
 
 buttonAddCard.addEventListener('click', function() {
     openModal(popupTypeAdd);
     cardNameInput.value = '';
     urlInput.value = '';
-    clearValidation(formElementAddCard);
 });
 
 //слушатели закрытия попапов
@@ -71,91 +81,79 @@ buttonCloseImg.addEventListener('click', function() {
     closeModal(popupTypeImage);
 });
 
-enableValidation();
 
 // API
 
 //подгружаем аватар
 
-uploadAvatar();
+uploadAvatar()
+.then((res) => {
+    profileTitle.textContent = res.name;
+    profileJob.textContent = res.about;
+    profileImage.setAttribute('style', `background-image: url(${res.avatar});`);
+})
+.catch((err) => {
+    console.log('Ошибка. Запрос не выполнен: ', err);
+}); 
+
+//функция удаления карточки с разметки
+
+const deleteCardFromLayout = (item) => {
+    deleteCard(item)
+    .then(() => {
+      const card = document.getElementById(`${item._id}`);
+      card.remove();
+      closeModal(popupTypeDelete);
+    })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ' + err);
+    });
+  }
+
+//функция добавления и снятия лайка в разметке
+
+const setAndDeleteLike = (e, item) => {
+if(e.target.classList.contains('card__like-button_is-active')) {
+    setDislike(item)
+    .then((res) => {
+        e.target.classList.toggle('card__like-button_is-active');
+        const card = document.getElementById(`${item._id}`);
+        const likesAmountElement = card.querySelector('.card__likes-amount');
+        likesAmountElement.textContent = res.likes.length;
+    })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ' + err);
+    });
+    } else {
+    setLike(item)
+    .then((res) => {
+        e.target.classList.toggle('card__like-button_is-active');
+        const card = document.getElementById(`${item._id}`);
+        const likesAmountElement = card.querySelector('.card__likes-amount');
+        likesAmountElement.textContent = res.likes.length;
+    })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ' + err);
+    });
+    }
+}
 
 //загружаем карточки 
-
-// getInitialCards();
 
 Promise.all([getUserId(), getInitialCards()])
 .then((data) => {
     const initialCards = data[1];
     const userId = data[0];
     initialCards.forEach(function (item) {
-            const cardCopy = createCard(item, item.likes.length);
-            const deleteButton = cardCopy.querySelector('.card__delete-button');
-            const likeCardButton = cardCopy.querySelector('.card__like-button');
-            const likesAmountElement = cardCopy.querySelector('.card__likes-amount');
+            const cardCopy = createCard(item, item.likes.length, userId, displayClickedImage, setAndDeleteLike, deleteCardFromLayout);
 
-            cardCopy.setAttribute('id', item._id);
-            // deleteButton.setAttribute('data-button-id', item._id); //нужно, чтобы добавить атрибут Id карточки на кнопку сабмита в модалке и знать, какую удалять
-            likeCardButton.setAttribute('data-like-card-id', item._id); //Нужно, чтобы в запросе к серверу по лайку найти нужную карточку
-            
-            likeCardButton.addEventListener('click', (e) => {
-                setAndDeleteLike(e, item);
-            })
-            
-            likesAmountElement.textContent = item.likes.length;
-
-            if(item.owner._id !== userId) {  //выключаем кнопку удаления у чужих карточек
-                deleteButton.style.display = 'none';
-            }
-            if(item.likes.some((item) => item._id === userId)) { // если мы поставили лайк до этого, пусть лайк будет активным
-                likeCardButton.classList.add('card__like-button_is-active');
-            }
-
-            deleteButton.addEventListener('click', function(e) {
-                const popupTypeDelete = document.querySelector('.popup_type_delete');
-                openModal(popupTypeDelete);
-                const popupButton = popupTypeDelete.querySelector('.popup__button');
-                popupButton.addEventListener('click', function(e) {
-                    deleteCard(e, item);
-                    closeModal(popupTypeDelete);
-                })
-                // popupButton.setAttribute('data-id', e.target.getAttribute('data-button-id'));  //передаем id карточки в атрибут открывшегося попапа, чтоб знать, какую удалять
-            })
-
-            //удаление карточки слушатель
-
-            // buttonSubmitDeleteCard.addEventListener('click', function(e) {
-            //     deleteCard(e);
-            //     closeModal(popupTypeDelete);
-            // })
             placesList.append(cardCopy);
             })
             
         })
-// .then(() => {
-//         const arrayDeleteButtons = document.querySelectorAll('.card__delete-button'); // можем реализовать только во втором then, чтоб подгрузился масив карточек с id
-//         arrayDeleteButtons.forEach((deleteButton) => {
-//             deleteButton.addEventListener('click', function(e) {
-//                 const popupTypeDelete = document.querySelector('.popup_type_delete');
-//                 openModal(popupTypeDelete);
-//                 const popupButton = popupTypeDelete.querySelector('.popup__button');
-//                 popupButton.addEventListener('click', function(e, item) {
-//                     deleteCard(e, item);
-//                     closeModal(popupTypeDelete);
-//                 })
-//                 // popupButton.setAttribute('data-id', e.target.getAttribute('data-button-id'));  //передаем id карточки в атрибут открывшегося попапа, чтоб знать, какую удалять
-//             })
-//         })
-//     })
 .catch((err) => {
     console.log('Ошибка. Запрос не выполнен: ' + err);
 });
-
-//удаление карточки слушатель
-
-// buttonSubmitDeleteCard.addEventListener('click', function(e) {
-//     deleteCard(e);
-//     closeModal(popupTypeDelete);
-// })
 
 //слушатель сабмита обновления данных профиля
 
@@ -165,42 +163,85 @@ formElementEditProfile.addEventListener('submit', function(e) {
     changeProfileData({
         name: titleInput.value,
         about: jobInput.value
+    })
+    .then((res) => {
+        profileTitle.textContent = res.name;
+        profileJob.textContent = res.about;
+        closeModal(popupTypeEdit);
+        clearValidation(formElementEditProfile, {
+            formSelector: '.popup__form',
+            inputSelector: '.popup__input',
+            submitButtonSelector: '.popup__button',
+            inactiveButtonClass: 'popup__button_disabled',
+            inputErrorClass: 'popup__input_type_error',
+            errorClass: 'popup__error_visible'
+          });
+    })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ' + err);
+    })
+    .finally(() => {
+        buttonSubmitEditCard.textContent = buttonSubmitEditCard.getAttribute('data-default-text');
     });
-    closeModal(popupTypeEdit);
 });
 
 //слушатель сабмита создания новой карточки
 
 document.forms.newPlace.addEventListener('submit', function (event) {
     event.preventDefault();
-  
+    buttonSubmitAddCard.textContent = buttonSubmitAddCard.getAttribute('data-loading');
+
     const { placeName, link } = event.currentTarget.elements;
   
     addNewCard({
       name: placeName.value,
       link: link.value
+    })
+    .then((item) => {
+        const cardCopy = createCard(item, item.likes.length, item.owner._id, displayClickedImage, setAndDeleteLike, deleteCardFromLayout);
+        placesList.prepend(cardCopy); //добавляем в начало
+        closeModal(popupTypeAdd);
+        })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ' + err)
+    })
+    .finally(() => {
+        buttonSubmitAddCard.textContent = buttonSubmitAddCard.getAttribute('data-default-text');
     });
     
     cardNameInput.value = '';
     urlInput.value = '';
-    closeModal(popupTypeAdd);
   });
 
 buttonEditAvatar.addEventListener('click', function() {
     openModal(popupTypeEditAvatar);
-    clearValidation(formElementEditAvatar);
+    clearValidation(formElementEditAvatar, {
+        formSelector: '.popup__form',
+        inputSelector: '.popup__input',
+        submitButtonSelector: '.popup__button',
+        inactiveButtonClass: 'popup__button_disabled',
+        inputErrorClass: 'popup__input_type_error',
+        errorClass: 'popup__error_visible'
+      });
+    inputAvatar.value = '';
 })
 
 buttonSubmitAvatarChange.addEventListener('click', function(e) {
     e.preventDefault();
     buttonSubmitAvatarChange.textContent = buttonSubmitAvatarChange.getAttribute('data-loading');
-    const inputAvatar = popupTypeEditAvatar.querySelector('.popup__input');
     const url = inputAvatar.value;
-    changeAvatar(url);
+    changeAvatar(url)
+    .then(() => {
+        profileImage.setAttribute('style', `background-image: url(${url});`);
+        closeModal(popupTypeEditAvatar);
+    })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ', err);
+    })
+    .finally(() => {
+        buttonSubmitAvatarChange.textContent = buttonSubmitAvatarChange.getAttribute('data-default-text');
+    });
     inputAvatar.value = '';
-    closeModal(popupTypeEditAvatar);
 })
 
 // показываем сколько лайков - реализовано в функции создания карточки
-
-export { displayClickedImage, popupTypeDelete }
