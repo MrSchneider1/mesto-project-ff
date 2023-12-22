@@ -1,8 +1,6 @@
-import { openModal } from './modal.js';
-
 const cardTemplate = document.querySelector('#card-template').content;
 
-function createCard(item, likesAmountElement, userId, displayImageFunction, setAndDeleteLikeFunction, DeleteCardFromLayoutFunction) {
+function createCard(item, userId, displayImageFunction, setAndDeleteLikeFunction, DeleteCardFunction) {
   const cardElement = cardTemplate.querySelector('.places__item').cloneNode(true);
   const cardImage = cardElement.querySelector('.card__image');
   const cardName = cardElement.querySelector('.card__title');
@@ -13,12 +11,10 @@ function createCard(item, likesAmountElement, userId, displayImageFunction, setA
   cardImage.src = item.link;
   cardImage.alt = item.name;
   cardName.textContent = item.name;
-  numberOfLikes.textContent = likesAmountElement;
+  numberOfLikes.textContent = item.likes.length;
 
-  cardElement.setAttribute('id', item._id);    //устанавливаем атрибуты data-* чтобы найти карточку при разных дествиях
-
-  if(item.owner._id !== userId) {  //выключаем кнопку удаления у чужих карточек
-    deleteButton.style.display = 'none';
+  if(item.owner._id !== userId) {  //удаляем кнопку удаления у чужих карточек
+    deleteButton.remove();
   }
   
   if(item.likes.some((item) => item._id === userId)) { // если мы поставили лайк до этого, пусть лайк будет активным
@@ -30,12 +26,7 @@ function createCard(item, likesAmountElement, userId, displayImageFunction, setA
   });
 
   deleteButton.addEventListener('click', function(e) {
-    const popupTypeDelete = document.querySelector('.popup_type_delete');
-    openModal(popupTypeDelete);
-    const popupButton = popupTypeDelete.querySelector('.popup__button');
-    popupButton.addEventListener('click', function(e) {
-      DeleteCardFromLayoutFunction(item);
-    })
+    DeleteCardFunction(e, item);
 })
 
   likeCardButton.addEventListener('click', (e) => {
@@ -45,4 +36,12 @@ function createCard(item, likesAmountElement, userId, displayImageFunction, setA
   return cardElement;
 }
 
-export { createCard }
+function deleteCardFromLayout(item) {
+  item.remove();
+}
+
+function toggleLike(e) {
+  e.target.classList.toggle('card__like-button_is-active');
+}
+
+export { createCard, deleteCardFromLayout, toggleLike }

@@ -7,21 +7,20 @@ function openModal(popup) {
     document.addEventListener('keydown', closeByEsc);
 }
 
-// закрытие на кнопку escape и по клику
+// закрытие на кнопке escape и по клику
 
-function closeByEsc(evt) {
-    if(evt.key === 'Escape') {
+function closeByEsc(e) {
+    if(e.key === 'Escape') {
         const popup = document.querySelector('.popup_is-opened');
         closeModal(popup);
     } 
 }
 
-function closeByClick(evt) {
-    const popup = document.querySelector('.popup_is-opened');
-    const closeButton = popup.querySelector('.popup__close');
-    if(evt.target === evt.currentTarget || evt.target === closeButton) {
-        const popup = document.querySelector('.popup_is-opened');
-        closeModal(popup);
+function closeByClick(e) {
+    const closeButton = e.currentTarget.querySelector('.popup__close');
+    if(e.target === e.currentTarget || e.target === closeButton) {
+        const popup = e.currentTarget.querySelector('.popup_is-opened');
+        closeModal(e.currentTarget);
     }
 }
 

@@ -3,66 +3,44 @@ const config = {
     headers: {
       authorization: '69f8653c-9291-433e-9bb1-872dc49ab260',
       'Content-Type': 'application/json'
-    }
+    },
+    headersShort: {
+        authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
+      }
 }
 
-// загрузка аватара с сервера
+const getResponseData = (res) => {
+    if (!res.ok) {
+        return Promise.reject(`Ошибка: ${res.status}`);
+    } 
+    return res.json();
+}
 
-  const uploadAvatar = () => {
-      return fetch(`${config.baseUrl}/users/me`, {
-        headers: {
-            authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
-          }
-    })
-        .then((res) => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                return Promise.reject(`Ошибка: ${res.status}`);
-            }
-        })
-  }
+// загрузка данных о пользовате с сервера
 
-const getUserId = () => {
-    return fetch(`${config.baseUrl}/users/me`,  {
-        headers: {
-            authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
-          }
-    })
-    .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
+const getUserData = () => {
+    return fetch(`${config.baseUrl}/users/me`, {
+    headers: {
+        authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
         }
+})
+    .then((res) => {
+        return getResponseData(res);
     })
-    .then(res => res._id)
-    .catch((err) => {
-        console.log('Ошибка. Идентификатор текущего пользователя не найден: ', err);
-    }); 
 }
 
 // добавление всех карточек с сервера
 
 const getInitialCards = () => {
     return fetch(`${config.baseUrl}/cards`, {
-        headers: {
-            authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
-          }
+        headers: config.headersShort
     })
         .then((res) => {
-            if (res.ok) {
-                return res.json();
-            } else {
-                return Promise.reject(`Ошибка: ${res.status}`);
-            }
+            return getResponseData(res);
         })
         .then((cards) => {
             return cards;
         })
-        .catch((err) => {
-            console.log('Ошибка запроса. Карточки не загружены с сервера: ', err);
-        }); 
 }
 
 
@@ -78,11 +56,7 @@ const addNewCard = (newCard) => {
         headers: config.headers     
     }) 
     .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
-        }
+        return getResponseData(res);
     })
 }
 
@@ -94,11 +68,7 @@ const setLike = (item) => {
                 headers: config.headers 
     })
     .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
-        }
+        return getResponseData(res);
     })
 }
 
@@ -108,27 +78,22 @@ const setDislike = (item) => {
                 headers: config.headers
     })
     .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
-        }
+        return getResponseData(res);
     })
 }
 
 //удаление карточки
 
-const deleteCard = (item) => {
+const deleteCardFromServer = (item) => {
     return fetch(`${config.baseUrl}/cards/${item._id}`, {
         method: 'DELETE',
         headers: config.headers
     })
     .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
-        }
+        return getResponseData(res);
+    })
+    .then((data) => {
+        console.log(data)
     })
 }
 
@@ -144,11 +109,7 @@ const changeProfileData = (data) => {
         headers: config.headers
     })
     .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
-        }
+        return getResponseData(res);
     })
 }
 
@@ -163,12 +124,9 @@ const changeAvatar = (url) => {
         headers: config.headers        
     })
     .then((res) => {
-        if (res.ok) {
-            return res.json();
-        } else {
-            return Promise.reject(`Ошибка: ${res.status}`);
-        }})
+        return getResponseData(res);
+    })
 }
 
-export { uploadAvatar, getInitialCards, addNewCard, deleteCard, changeProfileData, changeAvatar, getUserId, setLike, setDislike };
+export { getUserData, getInitialCards, addNewCard, deleteCardFromServer, changeProfileData, changeAvatar, setLike, setDislike };
   
