@@ -1,6 +1,6 @@
 import { openModal, closeModal } from './modal.js';
 import { enableValidation, clearValidation } from './validation.js';
-import { getUserData, getInitialCards, addNewCard, changeProfileData, changeAvatar, deleteCardFromServer, setDislike, setLike, getUserId } from './api.js'
+import { getUserData, getInitialCards, addNewCard, changeProfileData, changeAvatar, deleteCardFromServer, setDislike, setLike } from './api.js'
 import { createCard, deleteCardFromLayout, toggleLike } from "./card.js";
 
 const placesList = document.querySelector('.places__list');
@@ -32,6 +32,8 @@ const popupTypeEditAvatar = document.querySelector('.popup_type_edit_avatar');
 const buttonSubmitAvatarChange = popupTypeEditAvatar.querySelector('.popup__button');
 const formElementEditAvatar = popupTypeEditAvatar.querySelector('.popup__form');
 const inputAvatar = popupTypeEditAvatar.querySelector('.popup__input');
+let cardToDelete;
+let cardIdToDelete;
 
 function setDefaultInputs() {
     titleInput.value = profileTitle.textContent;
@@ -85,46 +87,22 @@ buttonAddCard.addEventListener('click', function() {
     urlInput.value = '';
 });
 
-//слушатели закрытия попапов
-
-buttonClosePopupEdit.addEventListener('click', function() {
-    closeModal(popupTypeEdit);
-});
-buttonClosePopupAdd.addEventListener('click', function() {
-    closeModal(popupTypeAdd);
-});
-buttonCloseImg.addEventListener('click', function() {
-    closeModal(popupTypeImage);
-});
-
-
 // API
-
 //функция удаления карточки с разметки
 
-const deleteCardFunction = (e, item) => {
+const deleteCardFunction = (cardElement, item) => {
     openModal(popupTypeDelete);
-    const card = e.target.closest('.card');
-    buttonPopupDeleteCard.addEventListener('click', function() {
-        deleteCardFromServer(item)
-        .catch((err) => {
-            console.log('Ошибка. Запрос не выполнен: ' + err);
-        });
-        deleteCardFromLayout(card);
-        closeModal(popupTypeDelete);
-    })
+    cardToDelete = cardElement;
+    cardIdToDelete = item._id;
   }
 
 //функция добавления и снятия лайка в разметке
 
-const setAndDeleteLike = (e, item) => {
+const setAndDeleteLike = (e, item, likeCardButton, numberOfLikesElement) => {
 if(e.target.classList.contains('card__like-button_is-active')) {
     setDislike(item)
     .then((res) => {
-        toggleLike(e);
-        const card = e.target.closest('.card');
-        const likesAmountElement = card.querySelector('.card__likes-amount');
-        likesAmountElement.textContent = res.likes.length;
+        toggleLike(likeCardButton, numberOfLikesElement, res.likes.length);
     })
     .catch((err) => {
         console.log('Ошибка. Запрос не выполнен: ' + err);
@@ -132,16 +110,28 @@ if(e.target.classList.contains('card__like-button_is-active')) {
     } else {
     setLike(item)
     .then((res) => {
-        toggleLike(e);
-        const card = e.target.closest('.card');
-        const likesAmountElement = card.querySelector('.card__likes-amount');
-        likesAmountElement.textContent = res.likes.length;
+        toggleLike(likeCardButton, numberOfLikesElement, res.likes.length);
     })
     .catch((err) => {
         console.log('Ошибка. Запрос не выполнен: ' + err);
     });
     }
 }
+
+//слушатель для подтверждения удаления карточки
+
+buttonPopupDeleteCard.addEventListener('click', function() {
+    deleteCardFromServer(cardIdToDelete)
+    .then(() => {
+        deleteCardFromLayout(cardToDelete);
+        closeModal(popupTypeDelete);
+        cardToDelete = null;
+        cardIdToDelete = null;
+    })
+    .catch((err) => {
+        console.log('Ошибка. Запрос не выполнен: ' + err);
+    });
+})
 
 //загружаем карточки и аватар
 
@@ -153,6 +143,7 @@ Promise.all([getUserData(), getInitialCards()])
         const cardCopy = createCard(item, userData._id, displayClickedImage, setAndDeleteLike, deleteCardFunction);
         placesList.append(cardCopy);
         })
+        
     profileTitle.textContent = userData.name;
     profileJob.textContent = userData.about;
     profileImage.setAttribute('style', `background-image: url(${userData.avatar});`);
@@ -191,15 +182,12 @@ document.forms.newPlace.addEventListener('submit', function (event) {
 
     const { placeName, link } = event.currentTarget.elements;
     
-
-    Promise.all([getUserData(), addNewCard({
-      name: placeName.value,
-      link: link.value
-    })])
-    .then((data) => {
-        const userData = data[0];
-        const item = data[1];
-        const cardCopy = createCard(item, userData._id, displayClickedImage, setAndDeleteLike, deleteCardFunction);
+    addNewCard({ 
+        name: placeName.value, 
+        link: link.value 
+      })
+    .then((item) => {
+        const cardCopy = createCard(item, item.owner._id, displayClickedImage, setAndDeleteLike, deleteCardFunction);
         placesList.prepend(cardCopy); //добавляем в начало
         closeModal(popupTypeAdd);
         })
@@ -209,9 +197,6 @@ document.forms.newPlace.addEventListener('submit', function (event) {
     .finally(() => {
         buttonSubmitAddCard.textContent = buttonSubmitAddCard.getAttribute('data-default-text');
     });
-    
-    cardNameInput.value = '';
-    urlInput.value = '';
   });
 
 buttonEditAvatar.addEventListener('click', function() {
@@ -243,5 +228,3 @@ buttonSubmitAvatarChange.addEventListener('click', function(e) {
         buttonSubmitAvatarChange.textContent = buttonSubmitAvatarChange.getAttribute('data-default-text');
     });
 })
-
-// показываем сколько лайков - реализовано в функции создания карточки

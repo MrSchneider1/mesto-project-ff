@@ -20,9 +20,7 @@ const getResponseData = (res) => {
 
 const getUserData = () => {
     return fetch(`${config.baseUrl}/users/me`, {
-    headers: {
-        authorization: '69f8653c-9291-433e-9bb1-872dc49ab260'
-        }
+    headers: config.headersShort
 })
     .then((res) => {
         return getResponseData(res);
@@ -37,9 +35,6 @@ const getInitialCards = () => {
     })
         .then((res) => {
             return getResponseData(res);
-        })
-        .then((cards) => {
-            return cards;
         })
 }
 
@@ -84,16 +79,13 @@ const setDislike = (item) => {
 
 //удаление карточки
 
-const deleteCardFromServer = (item) => {
-    return fetch(`${config.baseUrl}/cards/${item._id}`, {
+const deleteCardFromServer = (itemId) => {
+    return fetch(`${config.baseUrl}/cards/${itemId}`, {
         method: 'DELETE',
         headers: config.headers
     })
     .then((res) => {
         return getResponseData(res);
-    })
-    .then((data) => {
-        console.log(data)
     })
 }
 
